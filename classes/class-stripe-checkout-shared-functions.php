@@ -100,18 +100,28 @@ if ( ! class_exists( 'Stripe_Checkout_Functions' ) ) {
 
 				Stripe_Checkout_Functions::set_key( $test_mode );
 
+				$statement = $description;
+				if (isset($meta['Booking ID']))
+					$statement = $meta['Booking ID'];
+
+				$email_addr = $_POST['stripeEmail'];
+
+
 				// Create new customer
-				$new_customer = \Stripe\Customer::create( array(
+				/*$new_customer = \Stripe\Customer::create( array(
 					'email' => $_POST['stripeEmail'],
 					'card'  => $token,
-				));
+				));*/
 
 				// Create the charge on Stripe's servers - this will charge the user's default card
 				try {
 					$charge = \Stripe\Charge::create( array(
 							'amount'      => $amount, // amount in cents, again
 							'currency'    => $currency,
-							'customer'    => $new_customer['id'],
+							'source' 	  => $token,
+							'statement_descriptor' => $statement,
+							'receipt_email' => $email_addr,
+							//'customer'    => $new_customer['id'],
 							'description' => $description,
 							'metadata'    => $meta,
 						)
@@ -140,6 +150,9 @@ if ( ! class_exists( 'Stripe_Checkout_Functions' ) ) {
 					);
 
 					$failed = true;
+				} catch (Exception $e) {
+					echo 'Failed payment: ',  $e->getMessage(), "\n";
+					die();
 				}
 
 				unset( $_POST['stripeToken'] );
